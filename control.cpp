@@ -243,33 +243,6 @@ typedef SDL_Event eventtype;
 
 void handlePanning(int sym, int uni) {
   if(rug::rugged) return;
-
-#if !ISPANDORA
-  if(sym == SDLK_RIGHT) { 
-    if(conformal::on)
-      conformal::lvspeed += 0.1 * shiftmul;
-    else
-      View = xpush(-0.2*shiftmul) * View, playermoved = false, didsomething = true;
-    }
-  if(sym == SDLK_LEFT) {
-    if(conformal::on)
-      conformal::lvspeed -= 0.1 * shiftmul;
-    else
-      View = xpush(+0.2*shiftmul) * View, playermoved = false, didsomething = true;
-    }
-  if(sym == SDLK_UP) {
-    if(conformal::on)
-      conformal::lvspeed += 0.1 * shiftmul;
-    else
-      View = ypush(+0.2*shiftmul) * View, playermoved = false, didsomething = true;
-    }
-  if(sym == SDLK_DOWN) {
-    if(conformal::on)
-      conformal::lvspeed -= 0.1 * shiftmul;
-    else
-      View = ypush(-0.2*shiftmul) * View, playermoved = false, didsomething = true;
-    }
-#endif
   if(sym == SDLK_PAGEUP) {
     if(conformal::on)
       conformal::rotation++;
@@ -348,14 +321,36 @@ void handleKeyNormal(int sym, int uni) {
     if(sym == 'u' || sym == 'e' || sym == SDLK_KP9) movepckeydir(7);
     }
 
-#if ISPANDORA
   if(DEFAULTCONTROL) {
-    if(sym == SDLK_RIGHT) movepckeydir(0);
-    if(sym == SDLK_LEFT) movepckeydir(4);
-    if(sym == SDLK_DOWN) movepckeydir(2 + (leftclick?1:0) - (rightclick?1:0));
-    if(sym == SDLK_UP) movepckeydir(6 - (leftclick?1:0) + (rightclick?1:0));
+    if(sym == SDLK_RIGHT) {
+      if (flipplayer) {
+        cwt += cwt.at->type/2;
+        flipplayer = false;
+        }
+      cwt++;
+      mirror::act(1, mirror::SPINSINGLE);
+      wavephase = (1+wavephase) & 7;
+      }
+    if(sym == SDLK_LEFT) {
+    if (flipplayer) {
+      cwt += (cwt.at->type+1)/2;
+      flipplayer = false;
+      }
+      cwt--;
+      mirror::act(-1, mirror::SPINSINGLE);
+      wavephase = (-1+wavephase) & 7;
+      }
+  if(sym == SDLK_DOWN) movepcto(-1,1);
+  if(sym == SDLK_UP) {
+    if (flipplayer && cwt.at->type%2 == 0) {
+      cwt += cwt.at->type/2;
+      flipplayer = false;
     }
-#endif
+    if (!flipplayer) {
+      if(!canmove) movepcto(0), remission(); else movepcto(0);
+    }
+  }
+}
 
   if(DEFAULTNOR(sym)) {
     gmodekeys(sym, uni);
